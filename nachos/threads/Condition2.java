@@ -19,7 +19,7 @@ public class Condition2 {
 		Lib.assertTrue(conditionLock.isHeldByCurrentThread());
 		conditionLock.release();// 释放条件锁
 		boolean intStatus = Machine.interrupt().disable();// 关中断
-		/* 将正在运行的线程加入到等待队列 */
+		//将正在运行的线程加入到等待队列 
 		waitQueue.waitForAccess(KThread.currentThread());
 		KThread.sleep();// 让前线程沉睡
 

@@ -21,7 +21,6 @@ public class Boat {
 	public static void selfTest() {
 		BoatGrader b = new BoatGrader();
 
-		System.out.println("\n ***Testing Boats ...........***");
 		begin(2, 4, b);
 
 	}

@@ -10,6 +10,9 @@ public class KThread {
 	}
 
 	public KThread() {
+		boolean status = Machine.interrupt().disable();
+		waitForJoin.acquire(this);
+		Machine.interrupt().restore(status);
 		if (currentThread != null) {
 			tcb = new TCB();// 建立新的程序控制块
 		} else {
@@ -108,6 +111,11 @@ public class KThread {
 		toBeDestroyed = currentThread;
 
 		currentThread.status = statusFinished;// 当前的状态是finished
+		
+		KThread waitThread;
+		while ((waitThread = currentThread.waitForJoin.nextThread()) != null) {
+			waitThread.ready();
+		}
 
 		sleep();
 	}
@@ -128,6 +136,7 @@ public class KThread {
 	}
 
 	public static void sleep() {
+		//System.out.println("执行sleep()");
 		Lib.debug(dbgThread, "Sleeping thread: " + currentThread.toString());
 
 		Lib.assertTrue(Machine.interrupt().disabled());
@@ -151,19 +160,20 @@ public class KThread {
 		Machine.autoGrader().readyThread(this);
 	}
 
-	/*
-	 * 当A线程调用B.join()时，A线程阻塞，直到B线程完成。 在join() 函数中，在A不为完成态时，将A放到阻塞队列中，并执行阻塞函数。
-	 * 在finish()函数中，循环唤醒所有被阻塞的线程。
-	 */
 	public void join() {
 
 		Lib.debug(dbgThread, "Joining to thread: " + toString());
 
 		Lib.assertTrue(this != currentThread);
+		
+		boolean intStatus = Machine.interrupt().disable();//关中断
 
-		while (this.status != statusFinished)// 当前线程的状态不是被完成的
-			currentThread.yield();// 将该线程加入到就绪队列中，
-		// 可以跳转到该类中的yield方法
+		if (status != statusFinished) {
+			waitForJoin.waitForAccess(currentThread);//将进程挂到等待队列上去
+			KThread.sleep();
+		}
+
+		Machine.interrupt().restore(intStatus);
 	}
 
 	private static void createIdleThread() {
@@ -275,10 +285,9 @@ public class KThread {
 
 		KThread joined = new KThread(new joinTest());
 		joined.setName("new forked thread  ").fork();
-		System.out.println("我将要等待joined线程完成之后");
+		System.out.println("原线程开始等待");
 		joined.join();
-
-		System.out.println("线程执行结束了，我继续执行");
+		System.out.println("原线程继续执行\n");
 	}
 
 	/**
@@ -286,7 +295,7 @@ public class KThread {
 	 */
 	public static void selfTest() {
 		Lib.debug(dbgThread, "Enter KThread.selfTest");
-
+System.out.println("KThread selfTest");
 		new KThread(new PingTest(1)).setName("forked thread").fork();
 		new PingTest(0).run();
 	}
@@ -328,4 +337,7 @@ public class KThread {
 	private static KThread currentThread = null;
 	private static KThread toBeDestroyed = null;
 	private static KThread idleThread = null;
+	
+	//实验一等待队列
+	ThreadQueue waitForJoin = ThreadedKernel.scheduler.newThreadQueue(true);
 }
