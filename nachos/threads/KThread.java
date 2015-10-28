@@ -172,7 +172,9 @@ public class KThread {
 		idleThread = new KThread(new Runnable() {
 			public void run() {
 				while (true) {
-					// System.out.println("我是"+KThread.currentThread().getName()+"现在时间是"+Machine.timer().getTime());
+					// System.out.println("我是" +
+					// KThread.currentThread().getName() + "现在时间是" +
+					// Machine.timer().getTime());
 					yield();
 				}
 			}

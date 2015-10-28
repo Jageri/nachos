@@ -13,6 +13,7 @@ public abstract class Kernel {
      * Allocate a new kernel.
      */
     public Kernel() {
+    	
 	// make sure only one kernel is created
 	Lib.assertTrue(kernel == null);	
 	kernel = this;

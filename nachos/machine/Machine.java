@@ -63,8 +63,6 @@ public final class Machine {
 			}
 		});
 	}
-	
-	
 
 	/**
 	 * Yield to non-Nachos threads. Use in non-preemptive JVM's to give
