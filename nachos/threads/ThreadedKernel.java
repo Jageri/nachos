@@ -57,8 +57,8 @@ public class ThreadedKernel extends Kernel {
 //		System.out.println("\nTask1.3 test...");
 //		alarm.selfTest();
 //
-//		System.out.println("\nTask1.4 test...");
-//		Communicator.selfTest();
+		System.out.println("\nTask1.4 test...");
+		Communicator.selfTest();
 //
 //		SynchList.selfTest();
 //		SynchList2.selfTest();
@@ -66,8 +66,10 @@ public class ThreadedKernel extends Kernel {
 //		System.out.println("\nTask1.5 test...");
 //		PriorityScheduler.selfTest();
 
-		System.out.println("\nTask1.6 test...");
-		Boat.selfTest(3,4);
+//		System.out.println("\nTask1.6 test...");
+//		Boat.selfTest(3,4);
+		
+		
 		if (Machine.bank() != null) {
 			ElevatorBank.selfTest();
 		}

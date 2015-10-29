@@ -1,97 +1,88 @@
 package nachos.threads;
 
+import java.util.LinkedList;
+
 import nachos.machine.*;
 
+public class Communicator {
+	
+	  public Communicator() 
+	    {
+	    	lock = new Lock();
+	    	speaker = new Condition2(lock);
+	    	listener = new Condition2(lock);
+	    }
+	
+	private Lock lock; // 互斥锁
+	private int word = 0;
+	private static int speakercount = 0;// 说话者数量
+	private static int listenercount = 0; // 听者数量
+	LinkedList<Integer> Wordqueue = new LinkedList<Integer>();// 保存说者话语的队列
+	Condition2 speaker ;// 说者条件变量
+	Condition2 listener;// 听者条件变量
 
+	public void speak(int word) {
+		boolean intStatus = Machine.interrupt().disable();// 关中断
+		lock.acquire();// 拿到锁
+		if (listenercount == 0) // 没有听者，说者睡眠，队列存储说者的话
+		{
+			speakercount++;
+			Wordqueue.offer(word);
+			speaker.sleep();
+			listener.wake();// 尝试唤醒听者
+			speakercount--;// 说者队列人数减一
+		} else {
+			Wordqueue.offer(word);// 准备消息，唤醒听者
+			listener.wake();
+		}
+		lock.release();// 释放锁
+		Machine.interrupt().restore(intStatus);// 开中断
+		System.out.println(KThread.currentThread().getName()+"说"+word);
+		return;
+	}
 
-public class Communicator
-{
-    
-    public Communicator() 
-    {
-    	lock = new Lock();//new一个锁变量
-    	con = new Condition(lock);//条件变量，条件被实现了，就被唤醒,
-    }
+	public int listen() {
+		boolean intStatus = Machine.interrupt().disable();// 关中断
+		lock.acquire();// 获得锁
+		if (speakercount != 0) {
+			speaker.wake();// 有说者
+			listener.sleep();// 唤醒听者
+		} else {
+			listenercount++;// 听者数量加一
+			listener.sleep();// 听者睡眠
+			listenercount--;// 听者数量减一
+		}
+		System.out.println(KThread.currentThread().getName()+"听到了"+Wordqueue.getFirst());
+		lock.release();// 释放锁
+		
+		Machine.interrupt().restore(intStatus);// 开中断
+		
+		
+		return Wordqueue.poll();
+	}
 
-   
-    public void speak(int word) 
-    {
-    lock.acquire();//获得锁
-    
-    if(speaknum>0||listennum==0)//说者大于零且听者等于0
-        {
-    	speaknum++;
-    	con.sleep(); //将说者一个一个的阻塞掉，
-    	speaknum--;          //将说者一个一个减少
-      	}
-    if(listennum>0)
-        {
-    	//System.out.println(listennum);
-    	con.wakeAll();
-    	listennum=0;//阻塞听者，让说者说
-    	}
-    this.word=word;
-    //this.speaker_name=KThread.currentThread().getName();
-    System.out.println(KThread.currentThread().getName()+"线程说"+this.word);
-    lock.release();
-    }
+	private static class CommunicatorTest implements Runnable {
+		CommunicatorTest(Communicator communicator) {
+			this.communicator = communicator;
+		}
 
-    /**
-     * Wait for a thread to speak through this communicator, and then return
-     * the <i>word</i> that thread passed to <tt>speak()</tt>.
-     *
-     * @return	the integer transferred.
-     */    
-    public int listen()
-    {
-    lock.acquire();//获得锁
-    while(listennum>0||speaknum==0)
-    {
-    	listennum++;
-    	con.sleep();//将说者一个一个sleep
-    	listennum--;//挂起听者
-    	}
-    if(speaknum>0)
-       {
-    	con.wake();//将说者一个一个的唤醒，
-    	speaknum--;//让说说者
-    	}
-    KThread.currentThread().yield();//让线程让出cpu
-    System.out.println(KThread.currentThread().getName()+"线程听到"+this.word);
-    listennum=0;//听者为0，则就没有人听，
-    lock.release();
-	return this.word;
-    }
-    
-    private static class CommunicatorTest implements Runnable {
-    	CommunicatorTest(Communicator communicator) 
-    	{
-    	this.communicator=communicator;
-    	}
-    	public void run() 
-    	{
-    	    communicator.listen();
-    	    communicator.listen();//两个听者
-    	  
-    	}
-    	private Communicator communicator;
-        }
-    public static void selfTest() 
-    {
-    	Communicator communicator=new Communicator();
-    	new KThread(new CommunicatorTest(communicator)).setName("Communicator1").fork();
-    	
-    	KThread.currentThread().yield();//让线程让出CPU
-    	communicator.speak(1);
-    	communicator.speak(2);//两个人说两个人个人听
-    	//communicator.listen(1);
-    	KThread.currentThread().yield();//让线程让出CPU
-        }
-    
-    private Lock lock;
-    private Condition con;
-    private int word;
-    private static int speaknum;//speak的数量
-    private static int listennum;//listen的数量
-    
+		public void run() {
+			communicator.listen();
+			communicator.listen();// 两个听者
+
+		}
+
+		private Communicator communicator;
+	}
+
+	public static void selfTest() {
+		Communicator communicator = new Communicator();
+		new KThread(new CommunicatorTest(communicator)).setName("Communicator1").fork();
+		KThread.currentThread().yield();// 让线程让出CPU
+		communicator.speak(1);
+		communicator.speak(2);// 两个人说
+		//KThread.currentThread().yield();// 让线程让出CPU
+		KThread.currentThread().yield();// 让线程让出CPU
+	}
+
 }
