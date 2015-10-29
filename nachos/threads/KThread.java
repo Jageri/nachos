@@ -111,7 +111,7 @@ public class KThread {
 		toBeDestroyed = currentThread;
 
 		currentThread.status = statusFinished;// 当前的状态是finished
-		
+
 		KThread waitThread;
 		while ((waitThread = currentThread.waitForJoin.nextThread()) != null) {
 			waitThread.ready();
@@ -120,7 +120,7 @@ public class KThread {
 		sleep();
 	}
 
-	public static void yield() // 舍弃
+	public static void yield() // 屈服
 	{
 		Lib.debug(dbgThread, "Yielding thread: " + currentThread.toString());
 
@@ -136,7 +136,7 @@ public class KThread {
 	}
 
 	public static void sleep() {
-		//System.out.println("执行sleep()");
+		// System.out.println("执行sleep()");
 		Lib.debug(dbgThread, "Sleeping thread: " + currentThread.toString());
 
 		Lib.assertTrue(Machine.interrupt().disabled());
@@ -165,12 +165,12 @@ public class KThread {
 		Lib.debug(dbgThread, "Joining to thread: " + toString());
 
 		Lib.assertTrue(this != currentThread);
-		
-		boolean intStatus = Machine.interrupt().disable();//关中断
+
+		boolean intStatus = Machine.interrupt().disable();// 关中断
 
 		if (status != statusFinished) {
-			waitForJoin.waitForAccess(currentThread);//将进程挂到等待队列上去
-			KThread.sleep();
+			waitForJoin.waitForAccess(currentThread);// 将进程挂到等待队列上去
+			sleep();
 		}
 
 		Machine.interrupt().restore(intStatus);
@@ -295,7 +295,7 @@ public class KThread {
 	 */
 	public static void selfTest() {
 		Lib.debug(dbgThread, "Enter KThread.selfTest");
-System.out.println("KThread selfTest");
+		System.out.println("KThread selfTest");
 		new KThread(new PingTest(1)).setName("forked thread").fork();
 		new PingTest(0).run();
 	}
@@ -337,7 +337,7 @@ System.out.println("KThread selfTest");
 	private static KThread currentThread = null;
 	private static KThread toBeDestroyed = null;
 	private static KThread idleThread = null;
-	
-	//实验一等待队列
+
+	// 实验一等待队列
 	ThreadQueue waitForJoin = ThreadedKernel.scheduler.newThreadQueue(true);
 }

@@ -18,10 +18,10 @@ public class Boat {
 	static Lock lock3;
 	static Condition childrenReadyOnMolokai;// 在M岛上等待的孩子
 
-	public static void selfTest() {
+	public static void selfTest(int i, int j) {
 		BoatGrader b = new BoatGrader();
-
-		begin(2, 4, b);
+		System.out.println(j + " children and " + i + " adults.");
+		begin(i, j, b);
 
 	}
 
